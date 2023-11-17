@@ -4,11 +4,15 @@ import {
   useEffect,
   useContext,
   useReducer,
+  useCallback,
 } from "react";
+
+import { getCitiesData, getCityById } from "../service/getCitiesData";
 
 const CitiesContext = createContext();
 
-const BASE_URL = "http://localhost:8000";
+const BASE_URL =
+  "https://my-json-server.typicode.com/Akshaykhatri012/worldwise-backend";
 
 //using UseReducer here
 const initialState = {
@@ -69,7 +73,12 @@ function CitiesProvider({ children }) {
       try {
         const res = await fetch(`${BASE_URL}/cities`);
         const data = await res.json();
-        dispatch({ type: "cities/loaded", payload: data });
+        // const cities = await getCitiesData();
+        dispatch({
+          type: "cities/loaded",
+          payload: data,
+        });
+        // console.log(cities);
       } catch {
         dispatch({
           type: "rejected",
@@ -80,20 +89,26 @@ function CitiesProvider({ children }) {
     fetchCities();
   }, []);
 
-  async function getCity(id) {
-    if (Number(id) === currentCity.id) return;
-    dispatch({ type: "loading" });
-    try {
-      const res = await fetch(`${BASE_URL}/cities/${id}`);
-      const data = await res.json();
-      dispatch({ type: "city/loaded", payload: data });
-    } catch {
-      dispatch({
-        type: "rejected",
-        payload: "There was an error loading the city...",
-      });
-    }
-  }
+  const getCity = useCallback(
+    async function getCity(id) {
+      if (Number(id) === currentCity.id) return;
+      dispatch({ type: "loading" });
+      try {
+        // const res = await fetch(`${BASE_URL}/cities/${id}`);
+        // const data = await res.json();
+        const city = await getCityById(id);
+        // console.log("city by id", city);
+        // console.log(id);
+        dispatch({ type: "city/loaded", payload: city.data[0] });
+      } catch {
+        dispatch({
+          type: "rejected",
+          payload: "There was an error loading the city...",
+        });
+      }
+    },
+    [currentCity.id]
+  );
 
   async function createCity(newCity) {
     dispatch({ type: "loading" });
